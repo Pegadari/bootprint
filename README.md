@@ -1,5 +1,5 @@
 # stamp
-An esoteric programming language with minimal structures and a specific implementation of assignment - stamping.
+An esoteric programming language with minimal structures and a specialised implementation of assignment - stamping.
 
 An example program:
 ```
