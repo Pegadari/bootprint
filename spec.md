@@ -2,18 +2,30 @@
 
 <b>Disclaimer: The langauge is currently in development and is subject to major changes. Currently there are conflicts in the specification.</b>
 
+# TODO: implement a way to check >, <, >=, <= statements
+
 Stamp is designed with minimal structures and overal boilerplate, with a specific yet powerful implentation of assignment and control flow - stamping.
 
 ## File format
-Stamp programs are UTF-8 files with the ```.stamp``` file extension. It's just plain text.
+Stamp programs are [UTF-8](https://en.wikipedia.org/wiki/UTF-16) files with the ```.stamp``` file extension. It's just plain text.
 
 ## Comments
 Unoriginally, all characters following a ```//``` are comments, just like the C family. There are no multiline comments.
 
 ## Types
-Out of the box, Stamp only supports signed integers (64-bit), floats (64-bit, [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)), strings (UTF-8), booleans and arrays (denoted with ```[ ... ]```). A little limiting, but don't worry, it is dynamically typed.
+Dynamically typed, Stamp supports the following types:
+- signed long integers (32-bit)
+- floats (32-bit, [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754))
+- chars (max 32-bit, [UTF-8](https://en.wikipedia.org/wiki/UTF-16))
+- booleans (1-bit)
+- arrays, denoted as ```[ .. , .. , .. ]```
+
+Strings are also supported (denoted as ```" ... "```), but are actually arrays with chars. Unlike chars, integers and floats are converted to UTF-8 before being output.
+
+All types are implicitly arrays. For example, ```5``` is the same as ```{5}```. Further, arrays can hold heterogeneous types, ie. ```{5, 3.14, "hello", true, {7, 2}}``` is valid.
 
 ### Length
+The length of a variable or constant is the number of elements in the array.
 
 ## Stamping
 The stamp is a powerful operator that can be used for assignment and can assist with control flow. The four valid stamps are ```<=```, ```=>```, ```==``` and ```<>```. These stamps are called 'left stamp', 'right stamp', 'ink stamp' and 'dual stamp' respectively.
@@ -70,15 +82,69 @@ If the target variable has a length less than the source expression, then...
 The stamp also returns whether the target variable and source expression were equal. This is often ignored, but can be used for program flow.
 
 ## Structures
-Also taken from the C family, ```{ ... }``` are used to wrap a body of code. This body is run if the immediately preceding statement (often a stamp) evaluates to true and will continue to run until the statement is no longer true.
+Also taken from the C family, ```{ ... }``` are used to wrap a body of code, called a well. This well is execute if the immediately preceding statement (often a stamp) is true and will continue to run until the statement is no longer true.
+
+The following subsections demonstrate examples of Stamp code.
+
+### While
+If ```x``` equals ```5```, then the statment is true. While the statement is true, the well will continue to execute.
+```
+x == 5 {
+    ...
+}
+```
+
+### For
+In Stamp, a for loop and a for each loop are equivalent.
+```
+x <= {1, 2, 3} {
+    ...
+    // runs three times
+}
+```
+```
+x <= {2, 3}
+x <= {1, 2, 3} {
+    ...
+    // runs twice
+}
+```
+
+The program,
+```
+x <= {1, 2, 3} {
+    io <= x
+}
+```
+outputs
+```
+1
+2
+3
+```
+
+The program,
+```
+x <= {2, 3}
+x <= {1, 2, 3} {
+    io <= x
+}
+```
+outputs
+```
+{1, 2}
+{2, 3}
+```
 
 
 
 ### Conditional statements
+This section include the family of if statements.
+
 #### If
-If
+If ```x``` equals ```5```, then we want the well to execute, however, that would be a while loop. To emmulate an if statement, we only run the first iteration of a while loop. To do this, we use a temporary variable that we change during the first iteration.
 ```
-x_ <= x
+x_ <= x             // 
 x_ == 5 {
     ...
     x_ <= x_ + 1
@@ -94,27 +160,27 @@ false == (x_ == 5) {
 ```
 
 #### If else
+
+Again, we use a temporary variable to only execute the first iteration of the while loop. However, observe that if the 'if' well is executed, then the temporary variable will be changed. This will cause the 'else' clause to be false. If the 'if' will is not executed, then the temporary variable remains unchanged. To test is the temporary variable is changed, we can use a second temporary constant, set to the initial value of ```x```.
+
+Note that if ```x``` does not change in the 'if' well, then the temporary constant is not needed and you can use ```x``` instead of the temporary constant in the 'else' clause.
 ```
 x_ <= x
+x__ <= x
 // if
 x_ == 5 {
     ...
     x_ <= x_ + 1
 }
 // else
-x_ == x {
+x_ == x__ {
     ...
 }
 ```
 
 #### If elif else
 
-### While
-```
-x == 5 {
-    ...
-}
-```
+
 
 ### Do while
 ```
@@ -136,21 +202,7 @@ x <= 5 {
 x <= x_
 ```
 
-### For
-In Stamp, a for loop and a for each loop are equivalent.
-```
-x <= {1, 2, 3} {
-    ...
-    // runs three times
-}
-```
-```
-x <= {2, 3}
-x <= {1, 2, 3} {
-    ...
-    // runs twice
-}
-```
+
 
 
 ## Functions
