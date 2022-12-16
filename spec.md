@@ -65,7 +65,7 @@ The case of two unititialised variables in a dual stamp will result in a runtime
 #### Direct assignment
 If the target variable is not initialised or the target variable and the source expression have the same length, then stamping works the same way as assignment in other languages.
 For example, ```x <= 5``` assigns ```5``` to ```x``` and the following assigns ```{3, 4}``` to ```x```.
-```
+``` c
 // initialise x and y
 x <= {1, 2}
 y <= {3, 4}
@@ -88,7 +88,7 @@ The following subsections demonstrate examples of Stamp code.
 
 ### While
 If ```x``` equals ```5```, then the statment is true. While the statement is true, the well will continue to execute.
-```
+``` c
 x == 5 {
     ...
 }
@@ -96,13 +96,13 @@ x == 5 {
 
 ### For
 In Stamp, a for loop and a for each loop are equivalent.
-```
+``` c
 x <= {1, 2, 3} {
     ...
     // runs three times
 }
 ```
-```
+``` c
 x <= {2, 3}
 x <= {1, 2, 3} {
     ...
@@ -111,7 +111,7 @@ x <= {1, 2, 3} {
 ```
 
 The program,
-```
+``` c
 x <= {1, 2, 3} {
     io <= x
 }
@@ -124,7 +124,7 @@ outputs
 ```
 
 The program,
-```
+``` c
 x <= {2, 3}
 x <= {1, 2, 3} {
     io <= x
@@ -143,7 +143,7 @@ This section include the family of if statements.
 
 #### If
 If ```x``` equals ```5```, then we want the well to execute, however, that would be a while loop. To emmulate an if statement, we only run the first iteration of a while loop. To do this, we use a temporary variable that we change during the first iteration.
-```
+``` c
 x_ <= x             // 
 x_ == 5 {
     ...
@@ -151,7 +151,7 @@ x_ == 5 {
 }
 ```
 If not
-```
+``` c
 x_ <= x
 false == (x_ == 5) {
     ...
@@ -164,7 +164,7 @@ false == (x_ == 5) {
 Again, we use a temporary variable to only execute the first iteration of the while loop. However, observe that if the 'if' well is executed, then the temporary variable will be changed. This will cause the 'else' clause to be false. If the 'if' will is not executed, then the temporary variable remains unchanged. To test is the temporary variable is changed, we can use a second temporary constant, set to the initial value of ```x```.
 
 Note that if ```x``` does not change in the 'if' well, then the temporary constant is not needed and you can use ```x``` instead of the temporary constant in the 'else' clause.
-```
+``` c
 x_ <= x
 x__ <= x
 // if
@@ -183,7 +183,7 @@ x_ == x__ {
 
 
 ### Do while
-```
+``` c
 do <= true
 do == true {
     ...
@@ -194,7 +194,7 @@ do == true {
 ```
 
 ### If while
-```
+``` c
 x_ <= x
 x <= 5 {
     ...
@@ -212,7 +212,7 @@ x <= x_
 
 Ignore the below notes:
 
-```
+``` c
 // <= can be either way
 // eg. x <= 1 is the same as 1 => x
 // The side with the arrow head is modified to equal the other end
@@ -264,4 +264,25 @@ x_ == y {
 
 // FOR LOOPS
 i <= 
+```
+
+
+<br>
+
+<br>
+
+Idea for new stamp format:
+``` c
+            //    RETURN CONDITION            NEW VALUE FOR x
+x == 5      //       x equals 5                     5
+x <= 5      //     x less than 5                    5
+x >= 5      //    x greater than 5                  5
+x != 5      //     x not equals 5                   5
+
+x = 5       //       x equals 5                 0 (false)
+x < 5       //     x less than 5                0 (false)
+x > 5       //    x greater than 5              0 (false)
+x ! 5       //     x not equals 5               0 (false)
+
+
 ```
