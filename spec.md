@@ -2,30 +2,45 @@
 
 <b>Disclaimer: The langauge is currently in development and is subject to major changes. Currently there are conflicts in the specification.</b>
 
-# TODO: implement a way to check >, <, >=, <= statements
-
 Stamp is designed with minimal structures and overal boilerplate, with a specific yet powerful implentation of assignment and control flow - stamping.
 
 ## File format
 Stamp programs are [UTF-8](https://en.wikipedia.org/wiki/UTF-16) files with the ```.stamp``` file extension. It's just plain text.
 
 ## Comments
-Unoriginally, all characters following a ```//``` are comments, just like the C family. There are no multiline comments.
+All characters following a ```//``` are comments, just like the C family. There are no multiline comments.
+
+eg.
+``` c
+// this is a comment
+```
 
 ## Types
 Dynamically typed, Stamp supports the following types:
 - signed long integers (32-bit)
 - floats (32-bit, [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754))
 - chars (max 32-bit, [UTF-8](https://en.wikipedia.org/wiki/UTF-16))
-- booleans (1-bit)
 - arrays, denoted as ```[ .. , .. , .. ]```
 
 Strings are also supported (denoted as ```" ... "```), but are actually arrays with chars. Unlike chars, integers and floats are converted to UTF-8 before being output.
 
+Booleans are functional through truthiness. ```0``` as an integer and float, the empty string (```""```) and empty array (```[]```) are all false. All other values are true.
+
 All types are implicitly arrays. For example, ```5``` is the same as ```{5}```. Further, arrays can hold heterogeneous types, ie. ```{5, 3.14, "hello", true, {7, 2}}``` is valid.
 
 ### Length
-The length of a variable or constant is the number of elements in the array.
+The length of a variable or constant is the number of elements in the (implicit) array.
+
+eg.
+``` c
+                                    //  TYPE     LENGTH
+two == 2                            //  long       1
+pi == 3.14                          //  float      1
+a == "a"                            //  char       1
+hi == "Hi!"                         //  array      3     (implicitly ["H", "i", "!"])
+yes == 1                            //  long       1
+all == [two, pi, a, hi, yes, []]    //  array      6
+```
 
 ## Stamping
 The stamp is a powerful operator that can be used for assignment and can assist with control flow. The four valid stamps are ```<=```, ```=>```, ```==``` and ```<>```. These stamps are called 'left stamp', 'right stamp', 'ink stamp' and 'dual stamp' respectively.
@@ -118,9 +133,7 @@ x <= {1, 2, 3} {
 ```
 outputs
 ```
-1
-2
-3
+123
 ```
 
 The program,
@@ -132,8 +145,7 @@ x <= {1, 2, 3} {
 ```
 outputs
 ```
-{1, 2}
-{2, 3}
+{1, 2}{2, 3}
 ```
 
 
@@ -273,16 +285,14 @@ i <=
 
 Idea for new stamp format:
 ``` c
-            //    RETURN CONDITION            NEW VALUE FOR x
-x == 5      //       x equals 5                     5
-x <= 5      //     x less than 5                    5
-x >= 5      //    x greater than 5                  5
-x != 5      //     x not equals 5                   5
+            //    RETURN TRUTHINESS       NEW VALUE FOR x
+x == 5      //       x equals 5                 5
+x <= 5      //     x less than 5                5
+x >= 5      //    x greater than 5              5
+x != 5      //     x not equals 5               5
 
-x = 5       //       x equals 5                 0 (false)
-x < 5       //     x less than 5                0 (false)
-x > 5       //    x greater than 5              0 (false)
-x ! 5       //     x not equals 5               0 (false)
-
-
+x = 5       //       x equals 5             no change
+x < 5       //     x less than 5            no change
+x > 5       //    x greater than 5          no change
+x ! 5       //     x not equals 5           no change
 ```
