@@ -1,6 +1,6 @@
 # The Stamp Language Specification
 
-<b>Disclaimer: The langauge is currently in development and is subject to major changes. Currently there are conflicts in the specification.</b>
+<b>Disclaimer: The langauge is currently in development and is subject to minor changes.</b>
 
 Stamp is designed with minimal structures and overal boilerplate, with a specific yet powerful implentation of assignment and control flow - stamping.
 
@@ -10,7 +10,6 @@ Stamp programs are [UTF-8](https://en.wikipedia.org/wiki/UTF-16) files with the 
 ## Comments
 All characters following a ```//``` are comments, just like the C family. There are no multiline comments.
 
-eg.
 ``` c
 // this is a comment
 ```
@@ -21,72 +20,108 @@ Dynamically typed, Stamp supports the following types:
 - floats (32-bit, [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754))
 - chars (max 32-bit, [UTF-8](https://en.wikipedia.org/wiki/UTF-16))
 - arrays, denoted as ```[ .. , .. , .. ]```
+- strings, denoted as ```" ... "``` (implicitly arrays of chars)
 
-Strings are also supported (denoted as ```" ... "```), but are actually arrays with chars. Unlike chars, integers and floats are converted to UTF-8 before being output.
+Integers, floats and arrays are converted to their UTF-8 representation before being output, however chars are output as the corresponding UTF-8 value. Since strings are actually arrays with chars, they must be output as such (using a for loop).
 
-Booleans are functional through truthiness. ```0``` as an integer and float, the empty string (```""```) and empty array (```[]```) are all false. All other values are true.
+Booleans are functional through truthiness. ```0``` for both integers and floats, the empty string (```""```) and empty array (```[]```) are all false. All other values are true. This is how control flow is determined. False and true are represented by ```0``` and ```1``` respectively.
 
-All types are implicitly arrays. For example, ```5``` is the same as ```{5}```. Further, arrays can hold heterogeneous types, ie. ```{5, 3.14, "hello", true, {7, 2}}``` is valid.
+<!-- All types are implicitly arrays. For example, ```5``` is actually ```{5}```. Further, arrays can hold heterogeneous types, ie. ```{5, 3.14, "hello", true, {7, 2}}``` is valid. -->
+
+Note that arrays are not ordinal so performing greater than or less than comparison will thrown a [runtime error](#runtime-error).
 
 ### Length
-The length of a variable or constant is the number of elements in the (implicit) array.
+For arrays, the length is the number of elements. For all other types, the length is one.
 
-eg.
-``` c
+|             Example             |   Type  | Length |
+|:-------------------------------:|:-------:|:------:|
+|             ```2```             | integer |    1   |
+|            ```3.14```           |  float  |    1   |
+|            ```'a'```            |   char  |    1   |
+|           ```"Hi!"```           |  string |    3   |
+| ```[2, 3.14, 'a', "Hi!", []]``` |  array  |    5   |
+
+<!-- ``` c
                                     //  TYPE     LENGTH
-two == 2                            //  long       1
+two == 2                            // integer     1
 pi == 3.14                          //  float      1
 a == "a"                            //  char       1
-hi == "Hi!"                         //  array      3     (implicitly ["H", "i", "!"])
-yes == 1                            //  long       1
+hi == "Hi!"                         // string      3     (implicitly ["H", "i", "!"])
+yes == 1                            // integer     1
 all == [two, pi, a, hi, yes, []]    //  array      6
-```
+``` -->
 
 ## Stamping
-The stamp is a powerful operator that can be used for assignment and can assist with control flow. The four valid stamps are ```<=```, ```=>```, ```==``` and ```<>```. These stamps are called 'left stamp', 'right stamp', 'ink stamp' and 'dual stamp' respectively.
+The stamp is a powerful operator that can be used for assignment and can assist with control flow. A stamp consists of both a head (```=```, ```<```, ```>``` and ```!```) and a handle (```=``` and ``` ```). The head indicates how the truthiness of the stamp is determined and the handle indicates whether or not the assignment is executed.
 
-An expression on the ```<```/```>``` side is a <u>target expression</u> and an expression on the ```=``` side is a <u>source expression</u>. For the dual stamp, both sides are target expressions and source expressions.
+Below is an explaination of all eight possible stamps with an example.
+
+|    Example   | Truthiness predicate | New ```x``` value |
+|:------------:|:--------------------:|:-----------------:|
+| ```x == 5``` |    x is equal to 5   |         5         |
+| ```x <= 5``` |   x is less than 5   |         5         |
+| ```x >= 5``` |  x is greater than 5 |         5         |
+| ```x != 5``` |      x is not 5      |         5         |
+|  ```x = 5``` |    x is equal to 5   |        N/A        |
+|  ```x < 5``` |   x is less than 5   |        N/A        |
+|  ```x > 5``` |  x is greater than 5 |        N/A        |
+|  ```x ! 5``` |      x is not 5      |        N/A        |
 
 
 
-For example:
-- ```target_variable <= source_expression```
-- ```source_expression == source_expression```
+<!-- ``` c
+            //    RETURN TRUTHINESS       NEW VALUE FOR x
+x == 5      //       x equals 5                 5
+x <= 5      //     x less than 5                5
+x >= 5      //    x greater than 5              5
+x != 5      //     x not equals 5               5
 
-The logic for stamping is described below.
+x = 5       //       x equals 5             no change
+x < 5       //     x less than 5            no change
+x > 5       //    x greater than 5          no change
+x ! 5       //     x not equals 5           no change
+``` -->
 
-1. <b>Determine the truthiness.</b> True if both sides are equal, false otherwise.
-2. <b>Assignment.</b> Assign the target variable the value of the expression on the other side. For the dual stamp, this typically swaps their values. Skip this step for the ink stamp.
-3. <b>Return the truthiness.</b>
+The truthiness of the predicate is returned by the stamping.
 
+The left side of the stamp is the target variable and the right side is the source expression. For the above examples, ```x``` is the target variable and ```5``` is the source expression.
 
-There is a sub-step between Step 2 and Step 3 which will be covered in the for loop section.
+If the left side of the stamp is not a variable, a [syntax error](#syntax-error) will be thrown.
 
-(It can assign part or all of a variable onto another variable and returns the truthiness of the assignment. A stamp can point in either direction. For example, ```x <= y``` is the same as ```y => x```.)
+Note that in Stamp, ```=``` is used for equality and ```==``` is used for assignment (and equality). This differs from convention.
+
+(It can assign part or all of a variable onto another variable and returns the truthiness of the assignment)
 
 
 ### Assignment
-There are two types of assignment: direct and indirect. Direct assignment occurs when the target variable is not initialised or when the two sides have equal [length](#length). Indirect assignment occurs when the 
+There are two types of assignment: direct and indirect. Direct assignment occurs when the target variable is not initialised or when the two sides have equal [length](#length). Indirect assignment occurs when the target variable has a length less than the source expression.
 
-The case of two unititialised variables in a dual stamp will result in a runtime error.
+If the target variable has a length longer than the source expression a [runtime error](#runtime-error) will be thrown.
 
-|                                    |      Left stamp     |     Right stamp     |   Ink stamp   |      Dual stamp     |
+**[ INSERT TABLE FOR WHAT TYPE OF ASSIGNMENT IS USED WHEN ]**
+
+<!-- |                                    |      Left stamp     |     Right stamp     |   Ink stamp   |      Dual stamp     |
 |------------------------------------|:-------------------:|:-------------------:|:-------------:|:-------------------:|
 | Target expression contains literal |     syntax error    |     syntax error    |      N/A      |     syntax error    |
 | Uninitialised source expression    | direct (deallocate) | direct (deallocate) | runtime error | direct (deallocate) |
 | Same length                        |        direct       |        direct       |      none     |        direct       |
-| Different length                   |       indirect      |       indirect      |      none     |       indirect      |
+| Different length                   |       indirect      |       indirect      |      none     |       indirect      | -->
 
 #### Direct assignment
 If the target variable is not initialised or the target variable and the source expression have the same length, then stamping works the same way as assignment in other languages.
-For example, ```x <= 5``` assigns ```5``` to ```x``` and the following assigns ```{3, 4}``` to ```x```.
+
+For example, this assigns ```5``` to ```x``` and returns false (0) since it is not initialised:
+``` c
+x == 5
+```
+And this assigns ```{3, 4}``` to ```x``` and returns true (1) since ```[1, 2]``` is not equal to ```[3, 4]```:
 ``` c
 // initialise x and y
-x <= {1, 2}
-y <= {3, 4}
+x == [1, 2]
+y == [3, 4]
 
 // assign y to x
-x <= y
+x != y
 ```
 
 #### Indirect assignment
@@ -94,7 +129,7 @@ x <= y
 ### Control flow
 If the target variable has a length less than the source expression, then...
 
-The stamp also returns whether the target variable and source expression were equal. This is often ignored, but can be used for program flow.
+<!-- The stamp also returns whether the target variable and source expression were equal. This is often ignored, but can be used for program flow. -->
 
 ## Structures
 Also taken from the C family, ```{ ... }``` are used to wrap a body of code, called a well. This well is execute if the immediately preceding statement (often a stamp) is true and will continue to run until the statement is no longer true.
@@ -112,23 +147,26 @@ x == 5 {
 ### For
 In Stamp, a for loop and a for each loop are equivalent.
 ``` c
-x <= {1, 2, 3} {
+x == [1, 2, 3] {
     ...
     // runs three times
 }
 ```
+Another example:
 ``` c
-x <= {2, 3}
-x <= {1, 2, 3} {
+x == [2, 3]
+x == [1, 2, 3] {
     ...
     // runs twice
 }
 ```
 
+**[ EXPLAIN HOW ```io```/```terminal``` WORKS ]**
+
 The program,
 ``` c
-x <= {1, 2, 3} {
-    io <= x
+x == [1, 2, 3] {
+    io == x
 }
 ```
 outputs
@@ -138,81 +176,117 @@ outputs
 
 The program,
 ``` c
-x <= {2, 3}
-x <= {1, 2, 3} {
-    io <= x
+x == [2, 3]
+x == [1, 2, 3] {
+    io == x
 }
 ```
 outputs
 ```
-{1, 2}{2, 3}
+[1, 2][2, 3]
 ```
-
-
 
 ### Conditional statements
 This section include the family of if statements.
 
 #### If
-If ```x``` equals ```5```, then we want the well to execute, however, that would be a while loop. To emmulate an if statement, we only run the first iteration of a while loop. To do this, we use a temporary variable that we change during the first iteration.
+
 ``` c
-x_ <= x             // 
-x_ == 5 {
+x = 5 {
     ...
-    x_ <= x_ + 1
 }
 ```
+<!-- If ```x``` equals ```5```, then we want the well to execute, however, that would be a while loop. To emmulate an if statement, we only run the first iteration of a while loop. To do this, we use a temporary variable that we change during the first iteration. -->
+
+<!-- ``` c
+x_ == x
+x_ = 5 {
+    ...
+    x_ == x_ + 1
+}
+``` -->
+
 If not
 ``` c
-x_ <= x
-false == (x_ == 5) {
+x ! 5 {
     ...
-    x_ <= x_ + 1
 }
 ```
+<!-- ``` c
+x_ == x
+x_ ! 5 {
+    ...
+    x_ == x_ + 1
+}
+``` -->
 
 #### If else
-
-Again, we use a temporary variable to only execute the first iteration of the while loop. However, observe that if the 'if' well is executed, then the temporary variable will be changed. This will cause the 'else' clause to be false. If the 'if' will is not executed, then the temporary variable remains unchanged. To test is the temporary variable is changed, we can use a second temporary constant, set to the initial value of ```x```.
+``` c
+x_ == x
+// if
+x = 5 {
+    ...
+}
+// else
+x ! 5 {
+    ...
+}
+```
+or better,
+``` c
+x_ == x
+x__ == x
+// if
+x = 5 {
+    ...
+    x_ == x_ + 1
+}
+// else
+x_ = x__ {
+    ...
+}
+```
+**[ WRITE EXPLANATION ]**
+<!-- Again, we use a temporary variable to only execute the first iteration of the while loop. However, observe that if the 'if' well is executed, then the temporary variable will be changed. This will cause the 'else' clause to be false. If the 'if' will is not executed, then the temporary variable remains unchanged. To test is the temporary variable is changed, we can use a second temporary constant, set to the initial value of ```x```.
 
 Note that if ```x``` does not change in the 'if' well, then the temporary constant is not needed and you can use ```x``` instead of the temporary constant in the 'else' clause.
 ``` c
-x_ <= x
-x__ <= x
+x_ == x
+x__ == x
 // if
-x_ == 5 {
+x_ = 5 {
     ...
-    x_ <= x_ + 1
+    x_ == x_ + 1
 }
 // else
-x_ == x__ {
+x_ = x__ {
     ...
 }
-```
+``` -->
 
 #### If elif else
-
+**[ WRITE THIS ]**
 
 
 ### Do while
 ``` c
-do <= true
-do == true {
+repeat == 1
+repeat = 1 {
     ...
     fail_condition {
-        do <= false
+        repeat == 0
     }
 }
 ```
 
-### If while
+<!-- ### If while
 ``` c
-x_ <= x
-x <= 5 {
+x_ == x
+x = 5 {
     ...
 }
-x <= x_
-```
+x == x_
+``` -->
 
 
 
@@ -222,7 +296,7 @@ x <= x_
 
 
 
-Ignore the below notes:
+<!-- Ignore the below notes:
 
 ``` c
 // <= can be either way
@@ -276,23 +350,9 @@ x_ == y {
 
 // FOR LOOPS
 i <= 
-```
+``` -->
 
+Headings that I link to but haven't written yet.
+## Syntax error
 
-<br>
-
-<br>
-
-Idea for new stamp format:
-``` c
-            //    RETURN TRUTHINESS       NEW VALUE FOR x
-x == 5      //       x equals 5                 5
-x <= 5      //     x less than 5                5
-x >= 5      //    x greater than 5              5
-x != 5      //     x not equals 5               5
-
-x = 5       //       x equals 5             no change
-x < 5       //     x less than 5            no change
-x > 5       //    x greater than 5          no change
-x ! 5       //     x not equals 5           no change
-```
+## Runtime error
