@@ -4,8 +4,10 @@
 
 Stamp is designed with minimal structures and overal boilerplate, with a specific yet powerful implentation of assignment and control flow - stamping.
 
+
 ## File format
 Stamp programs are [UTF-8](https://en.wikipedia.org/wiki/UTF-16) files with the ```.stamp``` file extension. It's just plain text.
+
 
 ## Comments
 All characters following a ```//``` are comments, just like the C family. There are no multiline comments.
@@ -13,6 +15,7 @@ All characters following a ```//``` are comments, just like the C family. There 
 ``` c
 // this is a comment
 ```
+
 
 ## Types
 Dynamically typed, Stamp supports the following types:
@@ -41,86 +44,48 @@ For arrays, the length is the number of elements. For all other types, the lengt
 |           ```"Hi!"```           |  string |    3   |
 | ```[2, 3.14, 'a', "Hi!", []]``` |  array  |    5   |
 
-<!-- ``` c
-                                    //  TYPE     LENGTH
-two == 2                            // integer     1
-pi == 3.14                          //  float      1
-a == "a"                            //  char       1
-hi == "Hi!"                         // string      3     (implicitly ["H", "i", "!"])
-yes == 1                            // integer     1
-all == [two, pi, a, hi, yes, []]    //  array      6
-``` -->
 
 ## Stamping
-The stamp is a powerful operator that can be used for assignment and can assist with control flow. A stamp consists of both a head (```=```, ```<```, ```>``` and ```!```) and a handle (```=``` and ``` ```). The head indicates how the truthiness of the stamp is determined and the handle indicates whether or not the assignment is executed.
+The stamp is a powerful operator that can be used for assignment and can assist with control flow. A stamp consists of both a head (```=```, ```<```, ```>``` and ```!```) and a handle (```=```, ```:``` and ``` ```). The head prescribes the predicate for the truthiness of the stamp and the handle prescribes how the assignment is executed. The truth of the predicate is returned by the stamp statement.
 
-Below is an explaination of all eight possible stamps with an example.
+The target variable is on the side of the head and the source expression is on the side of the handle. If the target variable is not a variable, a [syntax error](#syntax-error) will be thrown.
 
-|    Example   | Truthiness predicate | New ```x``` value |
-|:------------:|:--------------------:|:-----------------:|
-| ```x == 5``` |    x is equal to 5   |         5         |
-| ```x <= 5``` |   x is less than 5   |         5         |
-| ```x >= 5``` |  x is greater than 5 |         5         |
-| ```x != 5``` |      x is not 5      |         5         |
-|  ```x = 5``` |    x is equal to 5   |        N/A        |
-|  ```x < 5``` |   x is less than 5   |        N/A        |
-|  ```x > 5``` |  x is greater than 5 |        N/A        |
-|  ```x ! 5``` |      x is not 5      |        N/A        |
+Below is an explaination of all twelve possible stamps with an example.
 
-
-
-<!-- ``` c
-            //    RETURN TRUTHINESS       NEW VALUE FOR x
-x == 5      //       x equals 5                 5
-x <= 5      //     x less than 5                5
-x >= 5      //    x greater than 5              5
-x != 5      //     x not equals 5               5
-
-x = 5       //       x equals 5             no change
-x < 5       //     x less than 5            no change
-x > 5       //    x greater than 5          no change
-x ! 5       //     x not equals 5           no change
-``` -->
-
-The truthiness of the predicate is returned by the stamp statement.
-
-The left side of the stamp is the target variable and the right side is the source expression. For the above examples, ```x``` is the target variable and ```5``` is the source expression.
-
-If the left side of the stamp is not a variable, a [syntax error](#syntax-error) will be thrown.
-
-Due to how [indirect assignment](#indirect-assignment) works, it is necessary to uninitialise a variable. To do this, it is valid to assign an uninitialised variable to an initialised variable.
-
-``` c
-x == 5      // x is initialised
-x == y      // x is now uninitialised, since y is uninitialised
-```
-
+|      Example      |         Predicate         | New ```x``` value |
+|:-----------------:|:-------------------------:|:-----------------:|
+|   ```x == 5```    |      x is equal to 5      |         5         |
+|   ```x <= 5```    |     x is less than 5      |         5         |
+|   ```x >= 5```    |    x is greater than 5    |         5         |
+|   ```x != 5```    |        x is not 5         |         5         |
+|                   |                           |                   |
+| ```x =: [5, 6]``` |    x is equal to [5, 6]   |         6         |
+| ```x <: [5, 6]``` |   x is less than [5, 6]   |         6         |
+| ```x >: [5, 6]``` |  x is greater than [5, 6] |         6         |
+| ```x !: [5, 6]``` |      x is not [5, 6]      |         6         |
+|                   |                           |                   |
+|    ```x = 5```    |      x is equal to 5      |        N/A        |
+|    ```x < 5```    |     x is less than 5      |        N/A        |
+|    ```x > 5```    |    x is greater than 5    |        N/A        |
+|    ```x ! 5```    |        x is not 5         |        N/A        |
 
 Note that in Stamp, ```=``` is used for equality and ```==``` is used for assignment (and equality). This differs from convention.
 
-<!-- (It can assign part or all of a variable onto another variable and returns the truthiness of the assignment) -->
+<i>The handles ```+```, ```-```, ```*```, ```/```, ```%```, ```^```, ```|``` and ```&``` may be added to the specification in the future. These would operate similar to the '```_=```' in C language family.</i>
 
 
 ### Assignment
-There are two types of assignment: direct and indirect. [Direct assignment](#direct-assignment) occurs when the target variable is not initialised or when the two sides have equal [length](#length). [Indirect assignment](#indirect-assignment) occurs when the target variable has a length less than the source expression.
-
-If the target variable has a length longer than the source expression a [runtime error](#runtime-error) will be thrown.
-
-|         Condition        | Assignment type |
-|:------------------------:|:---------------:|
-|  Target is uninitialised |      direct     |
-|        Same length       |      direct     |
-| Source has longer length |     indirect    |
-| Target has longer length |  runtime error  |
+There are two types of assignment: direct and indirect. [Direct assignment](#direct-assignment) uses the ```=``` handle and [indirect assignment](#indirect-assignment) uses the ```:``` handle.
 
 #### Direct assignment
-If the target variable is not initialised or the target variable and the source expression have the same length, then stamping works the same way as assignment in other languages.
+Prescribed by the ```=``` handle, direct assignment works the same way as assignment in other languages.
 
-For example, this assigns ```5``` to ```x``` and returns false (```0```) since it is not initialised:
+For example, this assigns ```5``` to ```x``` and returns false (```0```) since ```x``` was not ```5``` (it was uninitaialised):
 ``` c
 x == 5
 ```
-And this assigns ```{3, 4}``` to ```x``` and returns true (```1```) since ```[1, 2]``` is not equal to ```[3, 4]```:
+
+And this assigns ```{3, 4}``` to ```x``` and returns true (```1```) since ```[1, 2] != [3, 4]```:
 ``` c
 // initialise x and y
 x == [1, 2]
@@ -131,30 +96,27 @@ x != y
 ```
 
 #### Indirect assignment
-If the target variable has a length less than the source expression, then the assignment is looped over, similar to a for loop.
+Prescribed by the ```=``` handle, indirect assignment works similar to a for each loop, by looping over the values of the source expression, one by one.
 
 For example,
 ``` c
-x == 0
-x == [1, 2, 3, 4]
+x =: [1, 2, 3, 4]
 ```
 
-Here, ```x``` is assigned to value of ```1```, then ```2```, then ```3``` and finally ```4```. It is not assigned the value of ```[1, 2, 3, 4]```. This is because before the stamp, the length of ```x``` was one.
+Here, ```x``` is assigned to value of ```1```, then ```2```, then ```3```, then ```4```. It is not assigned the value of ```[1, 2, 3, 4]```.
 
 ### Control flow
-If the target variable has a length less than the source expression, then...
 
-<!-- The stamp also returns whether the target variable and source expression were equal. This is often ignored, but can be used for program flow. -->
 
 ## Structures
-Also taken from the C family, ```{ ... }``` are used to wrap a body of code, called a well. This well is execute if the immediately preceding statement (often a stamp) is true and will continue to run until the statement is no longer true.
+A well is a body of code wrapped in ```{ ... }``` ```{ ... }```. Wells are execute if the immediately preceding statement (often a stamp) is true and will continue to run until the statement is no longer true.
 
 The following subsections demonstrate examples of Stamp code.
 
 ### While
 If ```x``` equals ```5```, then the statment is true. While the statement is true, the well will continue to execute.
 ``` c
-x == 5 {
+x = 5 {
     ...
 }
 ```
@@ -162,17 +124,9 @@ x == 5 {
 ### For
 In Stamp, a for loop and a for each loop are equivalent.
 ``` c
-x == [1, 2, 3] {
+x !: [1, 2, 3] {
     ...
-    // runs three times
-}
-```
-Another example:
-``` c
-x == [2, 3]
-x == [1, 2, 3] {
-    ...
-    // runs twice
+    // runs three times, each with a different x value
 }
 ```
 
@@ -180,7 +134,7 @@ x == [1, 2, 3] {
 
 The program,
 ``` c
-x == [1, 2, 3] {
+x != [1, 2, 3] {
     io == x
 }
 ```
@@ -189,95 +143,53 @@ outputs
 123
 ```
 
-The program,
-``` c
-x == [2, 3]
-x == [1, 2, 3] {
-    io == x
-}
-```
-outputs
-```
-[1, 2][2, 3]
-```
-
 ### Conditional statements
 This section include the family of if statements.
 
 #### If
+If ```x``` equals ```5```, then we want the well to execute, however, that would be a while loop. To emmulate an if statement, we only run the first iteration of a while loop. To do this, we use a temporary variable that we change during the first iteration. Changing the temporary variable will cause the condition to be false.
 
 ``` c
-x = 5 {
-    ...
-}
-```
-<!-- If ```x``` equals ```5```, then we want the well to execute, however, that would be a while loop. To emmulate an if statement, we only run the first iteration of a while loop. To do this, we use a temporary variable that we change during the first iteration. -->
-
-<!-- ``` c
 x_ == x
 x_ = 5 {
-    ...
     x_ == x_ + 1
-}
-``` -->
-
-If not
-``` c
-x ! 5 {
     ...
 }
 ```
-<!-- ``` c
-x_ == x
-x_ ! 5 {
-    ...
-    x_ == x_ + 1
-}
-``` -->
 
 #### If else
-``` c
-x_ == x
-// if
-x = 5 {
-    ...
-}
-// else
-x ! 5 {
-    ...
-}
-```
-or better,
-``` c
-x_ == x
-x__ == x
-// if
-x = 5 {
-    ...
-    x_ == x_ + 1
-}
-// else
-x_ = x__ {
-    ...
-}
-```
-**[ WRITE EXPLANATION ]**
-<!-- Again, we use a temporary variable to only execute the first iteration of the while loop. However, observe that if the 'if' well is executed, then the temporary variable will be changed. This will cause the 'else' clause to be false. If the 'if' will is not executed, then the temporary variable remains unchanged. To test is the temporary variable is changed, we can use a second temporary constant, set to the initial value of ```x```.
+If ```x``` is not changed in the well, we can compare the temporary variable against ```x``` to see if it hasn't changed.
+<!-- Again, we use a temporary variable to only execute the first iteration of the while loop. However, observe that if the 'if' well is executed, then the temporary variable will be changed. This will cause the 'else' clause to be false. If the 'if' well is not executed, then the temporary variable remains unchanged. To test is the temporary variable is changed, we can use a temporary constant, set to the initial value of ```x```. -->
 
-Note that if ```x``` does not change in the 'if' well, then the temporary constant is not needed and you can use ```x``` instead of the temporary constant in the 'else' clause.
+``` c
+x_ == x
+// if
+x_ = 5 {
+    x_ == x_ + 1
+    ...
+}
+// else
+x_ = x {
+    x_ == x_ + 1
+    ...
+}
+```
+
+If ```x``` is changed in the well, we will need a constant that holds the original value of ```x``` to compare against instead.
 ``` c
 x_ == x
 x__ == x
 // if
 x_ = 5 {
-    ...
     x_ == x_ + 1
+    ...
 }
 // else
 x_ = x__ {
+    x_ == x_ + 1
     ...
 }
-``` -->
+```
 
 #### If elif else
 **[ WRITE THIS ]**
