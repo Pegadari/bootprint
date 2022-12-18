@@ -82,39 +82,45 @@ x > 5       //    x greater than 5          no change
 x ! 5       //     x not equals 5           no change
 ``` -->
 
-The truthiness of the predicate is returned by the stamping.
+The truthiness of the predicate is returned by the stamp statement.
 
 The left side of the stamp is the target variable and the right side is the source expression. For the above examples, ```x``` is the target variable and ```5``` is the source expression.
 
 If the left side of the stamp is not a variable, a [syntax error](#syntax-error) will be thrown.
 
+Due to how [indirect assignment](#indirect-assignment) works, it is necessary to uninitialise a variable. To do this, it is valid to assign an uninitialised variable to an initialised variable.
+
+``` c
+x == 5      // x is initialised
+x == y      // x is now uninitialised, since y is uninitialised
+```
+
+
 Note that in Stamp, ```=``` is used for equality and ```==``` is used for assignment (and equality). This differs from convention.
 
-(It can assign part or all of a variable onto another variable and returns the truthiness of the assignment)
+<!-- (It can assign part or all of a variable onto another variable and returns the truthiness of the assignment) -->
 
 
 ### Assignment
-There are two types of assignment: direct and indirect. Direct assignment occurs when the target variable is not initialised or when the two sides have equal [length](#length). Indirect assignment occurs when the target variable has a length less than the source expression.
+There are two types of assignment: direct and indirect. [Direct assignment](#direct-assignment) occurs when the target variable is not initialised or when the two sides have equal [length](#length). [Indirect assignment](#indirect-assignment) occurs when the target variable has a length less than the source expression.
 
 If the target variable has a length longer than the source expression a [runtime error](#runtime-error) will be thrown.
 
-**[ INSERT TABLE FOR WHAT TYPE OF ASSIGNMENT IS USED WHEN ]**
-
-<!-- |                                    |      Left stamp     |     Right stamp     |   Ink stamp   |      Dual stamp     |
-|------------------------------------|:-------------------:|:-------------------:|:-------------:|:-------------------:|
-| Target expression contains literal |     syntax error    |     syntax error    |      N/A      |     syntax error    |
-| Uninitialised source expression    | direct (deallocate) | direct (deallocate) | runtime error | direct (deallocate) |
-| Same length                        |        direct       |        direct       |      none     |        direct       |
-| Different length                   |       indirect      |       indirect      |      none     |       indirect      | -->
+|         Condition        | Assignment type |
+|:------------------------:|:---------------:|
+|  Target is uninitialised |      direct     |
+|        Same length       |      direct     |
+| Source has longer length |     indirect    |
+| Target has longer length |  runtime error  |
 
 #### Direct assignment
 If the target variable is not initialised or the target variable and the source expression have the same length, then stamping works the same way as assignment in other languages.
 
-For example, this assigns ```5``` to ```x``` and returns false (0) since it is not initialised:
+For example, this assigns ```5``` to ```x``` and returns false (```0```) since it is not initialised:
 ``` c
 x == 5
 ```
-And this assigns ```{3, 4}``` to ```x``` and returns true (1) since ```[1, 2]``` is not equal to ```[3, 4]```:
+And this assigns ```{3, 4}``` to ```x``` and returns true (```1```) since ```[1, 2]``` is not equal to ```[3, 4]```:
 ``` c
 // initialise x and y
 x == [1, 2]
@@ -125,6 +131,15 @@ x != y
 ```
 
 #### Indirect assignment
+If the target variable has a length less than the source expression, then the assignment is looped over, similar to a for loop.
+
+For example,
+``` c
+x == 0
+x == [1, 2, 3, 4]
+```
+
+Here, ```x``` is assigned to value of ```1```, then ```2```, then ```3``` and finally ```4```. It is not assigned the value of ```[1, 2, 3, 4]```. This is because before the stamp, the length of ```x``` was one.
 
 ### Control flow
 If the target variable has a length less than the source expression, then...
