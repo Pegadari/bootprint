@@ -12,10 +12,9 @@ Stamp programs are [UTF-8](https://en.wikipedia.org/wiki/UTF-16) files with the 
 ## Comments
 All characters following a ```//``` are comments, just like the C family. There are no multiline comments.
 
-``` c
+```c
 // this is a comment
 ```
-
 
 ## Types
 Dynamically typed, Stamp supports the following types:
@@ -80,13 +79,13 @@ There are two types of assignment: direct and indirect. [Direct assignment](#dir
 #### Direct assignment
 Prescribed by the ```=``` handle, direct assignment works the same way as assignment in other languages.
 
-For example, this assigns ```5``` to ```x``` and returns false (```0```) since ```x``` was not ```5``` (it was uninitaialised):
-``` c
+For example, this assigns ```5``` to ```x```. It also returns false (```0```) since ```x``` was not ```5``` (it was uninitaialised):
+```c
 x == 5
 ```
 
-And this assigns ```{3, 4}``` to ```x``` and returns true (```1```) since ```[1, 2] != [3, 4]```:
-``` c
+And this assigns ```{3, 4}``` to ```x```. It also returns true (```1```) since ```[1, 2] != [3, 4]```:
+```c
 // initialise x and y
 x == [1, 2]
 y == [3, 4]
@@ -99,23 +98,58 @@ x != y
 Prescribed by the ```=``` handle, indirect assignment works similar to a for each loop, by looping over the values of the source expression, one by one.
 
 For example,
-``` c
+```c
 x =: [1, 2, 3, 4]
 ```
 
-Here, ```x``` is assigned to value of ```1```, then ```2```, then ```3```, then ```4```. It is not assigned the value of ```[1, 2, 3, 4]```.
+Here, ```x``` is assigned to value of ```1```, then ```2```, then ```3``` and finally ```4```. It is not assigned the value of ```[1, 2, 3, 4]```.
 
-### Control flow
+## Input/Output
+There are no prebuilt functions, so Input/Output (IO) is achived with the ```io``` variable. IO only exists through the terminal.
+
+### Output
+To output to the terminal, assign the ```io``` variable the value to be output.
+```c
+io == 'H'
+io == 'i'
+io == '!'
+io == '\n'   // new line
+```
+Alternately, since a string is an array of chars, it can be looped over.
+```c
+io =: "Hi!\n"
+```
+
+Note that this,
+```c
+io == ["Hi!", '\n']
+```
+will output the following.
+```
+['H', 'i', '!']
+
+```
+### Input
+To recieve input from the terminal, retrieve the value from the ```io``` variable. This will prompt the user for one line of input.
+```c
+name == io
+```
+
+Altogether, IO might look like this.
+```c
+io == "Your name: "
+name == io
+```
 
 
 ## Structures
-A well is a body of code wrapped in ```{ ... }``` ```{ ... }```. Wells are execute if the immediately preceding statement (often a stamp) is true and will continue to run until the statement is no longer true.
+A well is a body of code wrapped in ```{ ... }```. Wells are execute if the immediately preceding statement (often a stamp) is true and will continue to run until the statement is no longer true. To be precise, after a well is executed, the program jumps back to the stamp statement immediately preceding the well.
 
 The following subsections demonstrate examples of Stamp code.
 
 ### While
-If ```x``` equals ```5```, then the statment is true. While the statement is true, the well will continue to execute.
-``` c
+While ```x``` equals ```5```, the statement is true and well will continue to execute.
+```c
 x = 5 {
     ...
 }
@@ -123,7 +157,7 @@ x = 5 {
 
 ### For
 In Stamp, a for loop and a for each loop are equivalent.
-``` c
+```c
 x !: [1, 2, 3] {
     ...
     // runs three times, each with a different x value
@@ -133,7 +167,7 @@ x !: [1, 2, 3] {
 **[ EXPLAIN HOW ```io```/```terminal``` WORKS ]**
 
 The program,
-``` c
+```c
 x != [1, 2, 3] {
     io == x
 }
@@ -149,7 +183,7 @@ This section include the family of if statements.
 #### If
 If ```x``` equals ```5```, then we want the well to execute, however, that would be a while loop. To emmulate an if statement, we only run the first iteration of a while loop. To do this, we use a temporary variable that we change during the first iteration. Changing the temporary variable will cause the condition to be false.
 
-``` c
+```c
 x_ == x
 x_ = 5 {
     x_ == x_ + 1
@@ -161,7 +195,7 @@ x_ = 5 {
 If ```x``` is not changed in the well, we can compare the temporary variable against ```x``` to see if it hasn't changed.
 <!-- Again, we use a temporary variable to only execute the first iteration of the while loop. However, observe that if the 'if' well is executed, then the temporary variable will be changed. This will cause the 'else' clause to be false. If the 'if' well is not executed, then the temporary variable remains unchanged. To test is the temporary variable is changed, we can use a temporary constant, set to the initial value of ```x```. -->
 
-``` c
+```c
 x_ == x
 // if
 x_ = 5 {
@@ -176,7 +210,7 @@ x_ = x {
 ```
 
 If ```x``` is changed in the well, we will need a constant that holds the original value of ```x``` to compare against instead.
-``` c
+```c
 x_ == x
 x__ == x
 // if
@@ -196,7 +230,7 @@ x_ = x__ {
 
 
 ### Do while
-``` c
+```c
 repeat == 1
 repeat = 1 {
     ...
@@ -207,7 +241,7 @@ repeat = 1 {
 ```
 
 <!-- ### If while
-``` c
+```c
 x_ == x
 x = 5 {
     ...
@@ -219,13 +253,12 @@ x == x_
 
 
 ## Functions
-## Input/Output
 
 
 
 <!-- Ignore the below notes:
 
-``` c
+```c
 // <= can be either way
 // eg. x <= 1 is the same as 1 => x
 // The side with the arrow head is modified to equal the other end
